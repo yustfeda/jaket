@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Iuran Jaket</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS Utama */
+        :root {
+            --primary-color: #28a745; 
+            --secondary-color: #218838; 
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --text-color: #343a40;
+            --light-text-color: #6c757d;
+            --border-color: #dee2e6;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            line-height: 1.6;
+            color: var(--text-color);
+            
+            /* Latar Belakang Utama */
+            background-image: url('bg.jpg'); /* GANTI DENGAN URL GAMBAR ANDA */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            
+            position: relative;
+        }
+        
+        /* Lapisan Transparan & Blur */
+        .app-bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7); /* Transparansi 70% */
+            backdrop-filter: blur(5px); /* Efek Blur */
+            z-index: -1;
+        }
+        
+        /* Logo Tengah */
+        .bg-logo {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -2;
+            opacity: 0.1; /* Logo samar */
+            pointer-events: none;
+        }
+        .bg-logo img {
+            width: 250px; /* Ukuran logo */
+            height: auto;
+        }
+        
+        /* Header */
+        .header {
+            /* Warna latar belakang dengan transparansi */
+            background-color: rgba(40, 167, 69, 0.7); /* var(--primary-color) dengan 70% opacity */
+            backdrop-filter: blur(5px); /* Efek blur untuk header */
+            color: #fff;
+            text-align: center;
+            padding: 2.5rem 1rem;
+            box-shadow: var(--shadow);
+            position: relative; /* Penting untuk z-index */
+            z-index: 10; /* Agar di atas overlay utama */
+        }
+
+        /* Navigasi */
+        .navbar {
+            background-color: var(--card-background);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 0.8rem 1rem;
+            text-align: center;
+            position: relative; /* Penting untuk z-index */
+            z-index: 10;
+        }
+        
+        .navbar button {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            cursor: pointer;
+            transition: color 0.3s, background-color 0.3s, transform 0.2s;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+        }
+        
+        .navbar button:hover {
+            color: var(--primary-color);
+            background-color: #e9ecef;
+            transform: translateY(-1px);
+        }
+        
+        .navbar button.active {
+            color: #fff;
+            background-color: var(--primary-color);
+            transform: translateY(0);
+        }
+
+        /* Kontainer Utama */
+        .container {
+            max-width: 960px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: relative;
+            z-index: 1; /* Agar konten di atas overlay utama */
+        }
+
+        .card {
+            background-color: var(--card-background);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Kontainer Iuran yang Diperbarui */
+        .iuran-summary-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .iuran-summary-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+            font-weight: 400;
+            position: relative;
+            z-index: 2;
+        }
+
+        .iuran-summary-card span {
+            display: block;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 2;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.2);
+        }
+
+        .iuran-summary-card .fa-solid.fa-money-bill-wave {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10rem;
+            color: rgba(255, 255, 255, 0.1);
+            z-index: 1;
+        }
+        
+        /* Pages */
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Tombol & Input */
+        .btn {
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        input[type="text"], input[type="number"] {
+            flex-grow: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: #fff;
+            color: var(--text-color);
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.25);
+        }
+
+        /* Daftar Peserta */
+        .member-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .member-card {
+            background-color: var(--card-background);
+            padding: 1.2rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .member-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .member-card .actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .member-card .actions i {
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--light-text-color);
+            transition: color 0.3s, transform 0.2s;
+        }
+        
+        .member-card .actions i:hover {
+            transform: scale(1.1);
+        }
+        .member-card .actions .fa-edit:hover { color: var(--primary-color); }
+        .member-card .actions .fa-money-bill-wave:hover { color: #007bff; /* Biru */ }
+        .member-card .actions .fa-trash-alt:hover { color: #dc3545; }
+
+        .member-card .photo-name-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .member-card .photo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .member-card h4 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--text-color);
+        }
+
+        /* Progress Bar (Gaya Air Berjalan) */
+        .progress-bar-wave {
+            background-color: #e9ecef;
+            border-radius: 4px;
+            height: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .progress-wave {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #6cbe8a 0%, var(--primary-color) 50%, #6cbe8a 100%);
+            background-size: 200% 100%;
+            animation: wave-animation 2s linear infinite;
+            border-radius: 4px;
+            transition: width 0.5s ease-in-out;
+        }
+        
+        @keyframes wave-animation {
+            0% { background-position: 100% 0; }
+            100% { background-position: 0% 0; }
+        }
+
+        .payment-info {
+            font-size: 0.9rem;
+            color: var(--light-text-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .payment-info strong {
+            color: var(--text-color);
+        }
+        
+        .member-card .btn {
+            width: 100%;
+            margin-top: 1rem;
+            padding: 8px 15px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            animation: fadeIn 0.3s;
+        }
+        
+        .modal-content {
+            background-color: var(--card-background);
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 400px;
+            box-shadow: var(--shadow);
+            position: relative;
+            animation: slideIn 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--primary-color);
+        }
+
+        .close-btn {
+            color: var(--light-text-color);
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: var(--text-color);
+        }
+
+        .modal-body input {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        .modal-footer .btn.cancel {
+            background-color: #6c757d;
+        }
+        
+        .modal-footer .btn.cancel:hover {
+            background-color: #5a6268;
+        }
+
+        /* Notifikasi Pop-up */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: #fff;
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            z-index: 1100;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-bg-overlay"></div>
+    <div class="bg-logo">
+        <img src="jaket.jpg"> </div>
+
+    <header class="header">
+        <h1>Aplikasi Iuran Jaket</h1>
+        <p>Kelola iuran jaket grup Anda</p>
+    </header>
+
+    <nav class="navbar">
+        <button id="add-page-btn" class="active">Tambah & Atur</button>
+        <button id="rekap-page-btn">Rekap Iuran</button>
+    </nav>
+
+    <main class="container">
+        <div id="add-data-page" class="page active">
+            <section class="card">
+                <h2>Atur Harga Jaket per Orang</h2>
+                <div class="input-group">
+                    <input type="number" id="jacket-price" placeholder="Harga Jaket per Orang" required>
+                    <button class="btn" id="set-price-btn">Simpan Harga</button>
+                </div>
+            </section>
+            
+            <section class="card" style="text-align:center;">
+                <h2>Tambah Peserta Baru</h2>
+                <button class="btn" id="open-add-modal-btn">Tambah Peserta</button>
+            </section>
+        </div>
+
+        <div id="rekap-page" class="page">
+            <section class="iuran-summary-card">
+                <i class="fa-solid fa-money-bill-wave"></i>
+                <h3>Total Iuran Terkumpul: <span id="total-paid">Rp0</span></h3>
+                <h3>Harga Jaket per Orang: <span id="current-jacket-price">Rp0</span></h3>
+                <h3>Total Biaya Jaket (Semua Peserta): <span id="total-group-cost">Rp0</span></h3>
+            </section>
+            
+            <section class="card member-list-section">
+                <h2>Daftar Peserta</h2>
+                <div id="member-list" class="member-grid">
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div id="main-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title"></h3>
+                <span class="close-btn">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="modal-message"></p>
+                <input type="text" id="modal-input" placeholder="">
+            </div>
+            <div class="modal-footer">
+                <button id="modal-cancel-btn" class="btn cancel">Batal</button>
+                <button id="modal-submit-btn" class="btn">Simpan</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification-popup" class="notification"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue, set, get, child, update, remove } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA626-nkHphZDSQoJfZk1WwBqm93Zlp8g0",
+            authDomain: "jaket-9af25.firebaseapp.com",
+            databaseURL: "https://jaket-9af25-default-rtdb.firebaseio.com",
+            projectId: "jaket-9af25",
+            storageBucket: "jaket-9af25.firebasestorage.app",
+            messagingSenderId: "590090949778",
+            appId: "1:590090949778:web:224e437c249d4893a2824b"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // --- DAFTAR FOTO (GANTI SESUAI KEBUTUHAN) ---
+        // Anda hanya perlu menambahkan nama dan URL foto di sini.
+        // Kode akan secara otomatis menyesuaikannya dengan data di database.
+        const memberPhotos = {
+            "Kang Danu": "danu.jpg", 
+            "Nisa": "nisa.jpg",
+            "Kang yudha": "Kang yudha.jpg", 
+            "Teh Nia": "https://i.ibb.co/F82f3mY/kakashi.jpg",
+            "Hinata Hyuga": "https://i.ibb.co/cXwJ2zS/hinata.jpg",
+            "Jiraiya": "https://i.ibb.co/RzM3p7h/jiraiya.jpg",
+        };
+
+        const memberList = document.getElementById('member-list');
+        const totalPaidSpan = document.getElementById('total-paid');
+        const currentJacketPriceSpan = document.getElementById('current-jacket-price');
+        const totalGroupCostSpan = document.getElementById('total-group-cost');
+        const jacketPriceInput = document.getElementById('jacket-price');
+        const setPriceBtn = document.getElementById('set-price-btn');
+        const addPageBtn = document.getElementById('add-page-btn');
+        const rekapPageBtn = document.getElementById('rekap-page-btn');
+        const addDataPage = document.getElementById('add-data-page');
+        const rekapPage = document.getElementById('rekap-page');
+        const openAddModalBtn = document.getElementById('open-add-modal-btn');
+        
+        const modal = document.getElementById('main-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalInput = document.getElementById('modal-input');
+        const modalSubmitBtn = document.getElementById('modal-submit-btn');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const closeModalBtn = document.querySelector('.close-btn');
+        const notificationPopup = document.getElementById('notification-popup');
+        
+        const membersRef = ref(database, 'members');
+        const configRef = ref(database, 'config');
+        
+        // --- FUNGSI NAVIGASI HALAMAN ---
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            document.querySelectorAll('.navbar button').forEach(btn => btn.classList.remove('active'));
+            if(pageId === 'add-data-page') {
+                addPageBtn.classList.add('active');
+            } else {
+                rekapPageBtn.classList.add('active');
+            }
+        }
+        
+        addPageBtn.addEventListener('click', () => showPage('add-data-page'));
+        rekapPageBtn.addEventListener('click', () => showPage('rekap-page'));
+
+        // --- MANAJEMEN HARGA JAKET ---
+        setPriceBtn.addEventListener('click', () => {
+            const price = parseFloat(jacketPriceInput.value);
+            if (!isNaN(price) && price > 0) {
+                set(configRef, { jacketPrice: price })
+                .then(() => showNotification('Harga jaket berhasil disimpan!'))
+                .catch(error => {
+                    console.error("Gagal menyimpan harga: ", error);
+                    showNotification('Gagal menyimpan harga.', 'error');
+                });
+            } else {
+                showNotification('Masukkan harga yang valid!', 'error');
+            }
+        });
+        
+        // --- LISTENER DATABASE REALTIME ---
+        onValue(membersRef, (snapshot) => {
+            const members = snapshot.val();
+            updateUI(members);
+        });
+
+        let currentJacketPrice = 0;
+        onValue(configRef, (snapshot) => {
+            const config = snapshot.val();
+            if (config && config.jacketPrice) {
+                currentJacketPrice = config.jacketPrice;
+                currentJacketPriceSpan.textContent = formatRupiah(currentJacketPrice);
+                
+                get(membersRef).then(membersSnapshot => {
+                    const memberCount = membersSnapshot.exists() ? Object.keys(membersSnapshot.val()).length : 0;
+                    const totalCost = currentJacketPrice * memberCount;
+                    totalGroupCostSpan.textContent = formatRupiah(totalCost);
+                });
+            } else {
+                currentJacketPrice = 0;
+                currentJacketPriceSpan.textContent = formatRupiah(0);
+                totalGroupCostSpan.textContent = formatRupiah(0);
+            }
+        });
+        
+        // --- PERBARUI UI (REKAP DATA) ---
+        function updateUI(members) {
+            memberList.innerHTML = '';
+            let totalPaid = 0;
+            let memberCount = 0;
+
+            if (members) {
+                Object.keys(members).forEach(key => {
+                    const member = members[key];
+                    const photoUrl = memberPhotos[member.name] || 'https://i.ibb.co/p2QzY3P/default-avatar.png';
+                    const card = createMemberCard(key, member, currentJacketPrice, photoUrl);
+                    memberList.appendChild(card);
+                    totalPaid += member.paid;
+                    memberCount++;
+                });
+            }
+            totalPaidSpan.textContent = formatRupiah(totalPaid);
+
+            const totalCost = currentJacketPrice * memberCount;
+            totalGroupCostSpan.textContent = formatRupiah(totalCost);
+        }
+        
+        // --- BUAT KARTU PESERTA ---
+        function createMemberCard(key, member, jacketPrice, photoUrl) {
+            const card = document.createElement('div');
+            card.className = 'member-card';
+            const paidPercentage = (jacketPrice > 0) ? Math.min(100, (member.paid / jacketPrice) * 100) : 0;
+            
+            card.innerHTML = `
+                <div class="actions">
+                    <i class="fas fa-edit" data-key="${key}" data-action="edit-name"></i>
+                    <i class="fas fa-money-bill-wave" data-key="${key}" data-action="edit-paid-amount" title="Edit Jumlah Bayar"></i>
+                    <i class="fas fa-trash-alt" data-key="${key}" data-action="delete"></i>
+                </div>
+                <div class="photo-name-group">
+                    <img src="${photoUrl}" alt="Foto ${member.name}" class="photo">
+                    <h4>${member.name}</h4>
+                </div>
+                <div class="payment-info">
+                    <span>Sudah Bayar:</span> <strong>${formatRupiah(member.paid)}</strong>
+                </div>
+                <div class="progress-bar-wave">
+                    <div class="progress-wave" style="width: ${paidPercentage}%;"></div>
+                </div>
+                <div class="payment-info">
+                    <span>Sisa:</span> <strong>${formatRupiah(Math.max(0, jacketPrice - member.paid))}</strong>
+                </div>
+            `;
+            
+            const payButton = document.createElement('button');
+            payButton.textContent = 'Bayar';
+            payButton.className = 'btn pay-btn';
+            payButton.addEventListener('click', () => {
+                showModal('bayar', key, member);
+            });
+            card.appendChild(payButton);
+            
+            card.querySelector('.fa-trash-alt').addEventListener('click', () => {
+                if (confirm(`Apakah Anda yakin ingin menghapus ${member.name}?`)) {
+                    remove(child(membersRef, key))
+                        .then(() => showNotification('Peserta berhasil dihapus!'))
+                        .catch(error => {
+                            console.error("Gagal menghapus data: ", error);
+                            showNotification('Gagal menghapus peserta.', 'error');
+                        });
+                }
+            });
+            
+            card.querySelector('.fa-edit').addEventListener('click', () => {
+                showModal('edit-name', key, member);
+            });
+
+            card.querySelector('.fa-money-bill-wave').addEventListener('click', () => {
+                showModal('edit-paid-amount', key, member);
+            });
+            
+            return card;
+        }
+
+        // --- NOTIFIKASI POP-UP ---
+        function showNotification(message) {
+            notificationPopup.textContent = message;
+            notificationPopup.classList.add('show');
+            setTimeout(() => {
+                notificationPopup.classList.remove('show');
+            }, 3000);
+        }
+        
+        // --- MANAJEMEN MODAL ---
+        openAddModalBtn.addEventListener('click', () => {
+            showModal('tambah-data');
+        });
+
+        function showModal(type, key = null, member = null) {
+            modal.style.display = 'block';
+            modalInput.value = '';
+            
+            if (type === 'tambah-data') {
+                modalTitle.textContent = 'Tambah Peserta Baru';
+                modalMessage.textContent = 'Masukkan nama peserta:';
+                modalInput.type = 'text';
+                modalInput.placeholder = 'Nama Peserta';
+                modalSubmitBtn.textContent = 'Tambah';
+                modalSubmitBtn.onclick = () => {
+                    const name = modalInput.value.trim();
+                    if (name) {
+                        push(membersRef, { name: name, paid: 0 })
+                        .then(() => {
+                            modal.style.display = 'none';
+                            showNotification('Peserta berhasil ditambahkan!');
+                        })
+                        .catch(error => {
+                            console.error("Gagal menambahkan data: ", error);
+                            showNotification('Gagal menambahkan peserta.', 'error');
+                        });
+                    }
+                };
+            } else if (type === 'bayar') {
+                modalTitle.textContent = `Pembayaran untuk ${member.name}`;
+                modalMessage.textContent = 'Masukkan jumlah yang akan dibayarkan:';
+                modalInput.type = 'number';
+                modalInput.placeholder = 'Jumlah Pembayaran';
+                modalInput.value = '';
+                modalSubmitBtn.textContent = 'Bayar';
+                modalSubmitBtn.onclick = () => {
+                    const amount = parseFloat(modalInput.value);
+                    if (!isNaN(amount) && amount > 0) {
+                        const newPaid = member.paid + amount;
+                        update(child(membersRef, key), { paid: newPaid })
+                        .then(() => {
+                            modal.style.display = 'none';
+                            showNotification('Pembayaran berhasil!');
+                        })
+                        .catch(error => {
+                            console.error("Gagal update pembayaran: ", error);
+                            showNotification('Gagal melakukan pembayaran.', 'error');
+                        });
+                    }
+                };
+            } else if (type === 'edit-name') {
+                modalTitle.textContent = `Ubah Nama ${member.name}`;
+                modalMessage.textContent = 'Masukkan nama baru:';
+                modalInput.type = 'text';
+                modalInput.value = member.name;
+                modalInput.placeholder = 'Nama Baru';
+                modalSubmitBtn.textContent = 'Simpan';
+                modalSubmitBtn.onclick = () => {
+                    const newName = modalInput.value.trim();
+                    if (newName) {
+                        update(child(membersRef, key), { name: newName })
+                        .then(() => {
+                            modal.style.display = 'none';
+                            showNotification('Nama berhasil diubah!');
+                        })
+                        .catch(error => {
+                            console.error("Gagal mengedit nama: ", error);
+                            showNotification('Gagal mengubah nama.', 'error');
+                        });
+                    }
+                };
+            } else if (type === 'edit-paid-amount') {
+                modalTitle.textContent = `Ubah Jumlah Bayar ${member.name}`;
+                modalMessage.textContent = 'Masukkan total iuran yang sudah dibayarkan:';
+                modalInput.type = 'number';
+                modalInput.value = member.paid;
+                modalInput.placeholder = 'Total Iuran Dibayar';
+                modalSubmitBtn.textContent = 'Simpan';
+                modalSubmitBtn.onclick = () => {
+                    const newPaidAmount = parseFloat(modalInput.value);
+                    if (!isNaN(newPaidAmount) && newPaidAmount >= 0) {
+                        update(child(membersRef, key), { paid: newPaidAmount })
+                        .then(() => {
+                            modal.style.display = 'none';
+                            showNotification('Jumlah iuran berhasil diubah!');
+                        })
+                        .catch(error => {
+                            console.error("Gagal mengubah iuran: ", error);
+                            showNotification('Gagal mengubah jumlah iuran.', 'error');
+                        });
+                    }
+                };
+            }
+        }
+        
+        closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
+        modalCancelBtn.addEventListener('click', () => modal.style.display = 'none');
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+        
+        function formatRupiah(number) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(number);
+        }
+    </script>
+</body>
+</html>
